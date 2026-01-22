@@ -5,13 +5,12 @@
 #include <stack>
 #include <mutex>
 
-class id_allocation
+class Id_allocation
 {
 private:
     std::atomic<size_t> next_id_{1};
     mutable std::mutex recycled_mutex_;
     std::stack<size_t, std::vector<size_t>> recycled_ids_;
-
 public:
     size_t get_id()
     {

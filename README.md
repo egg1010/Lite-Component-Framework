@@ -8,7 +8,7 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 ---
 # Environment setup copies the include folder into the project
 ---
-# Detailed usage instructions are in usagec.cpp usage.md
+# Detailed usage instructions are in usage.md and usagec.cpp 
 
 
 
@@ -17,7 +17,7 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 ---
 # 环境配置把include文件夹复制到项目中
 ---
-# 具体使用方法在usagec.cpp usage.md
+# 具体使用方法在usage.md和usagec.cpp 
 
 
 

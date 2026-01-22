@@ -105,6 +105,11 @@ public:
     Operating_message remove(int indexs)
     {
 
+        if (dense_.empty() || object_v_.empty()) 
+        {
+            message.write_message(0, "error ", "Single_class_set::remove(): Container is empty", ";");
+            return message;
+        }
         if(indexs == -1 || indexs >= sparse_.size())
         {   
 

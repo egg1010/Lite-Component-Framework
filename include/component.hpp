@@ -80,7 +80,7 @@ public:
         std::shared_lock<std::shared_mutex> lock(mutex_);
         for(auto &i:map_)
         {
-            func(i.first, i.first);
+            func(i.first, i.second);
         }
     }
 
@@ -90,7 +90,7 @@ public:
         std::unique_lock<std::shared_mutex> lock(mutex_);
         for(auto &i:map_)
         {
-            func(i.first, i.first);
+            func(i.first, i.second);
         }
     }
 
@@ -176,7 +176,7 @@ inline static Global_components_map& global_components_map_ = Global_components_
 class entity_manager
 {
 private:
-    inline static id_allocation id_manager_;
+    inline static Id_allocation id_manager_;
     entity_manager();
 public:
     static entity create_entity()
