@@ -14,8 +14,8 @@ class manager;
 class Single_class_set
 {
 private:
-    std::vector<int> sparse_;
-    std::vector<int> dense_;
+    std::vector<uint32_t> sparse_;
+    std::vector<uint32_t> dense_;
     std::vector<Void_any> object_v_;
     int type_id_{-1};
     Operating_message message;
@@ -30,12 +30,12 @@ public:
     
     template <typename T>
 
-    Single_class_set(int indexs,T&& object,Void_any_option option=vao::Absolute_heap_memory)
+    Single_class_set(entity e,T&& object,Void_any_option option=vao::Absolute_heap_memory)
     {
-        add(indexs,std::forward<T>(object),option);
+        add(e,std::forward<T>(object),option);
     }
     template <typename T>
-    Operating_message add(int indexs,T&& object,Void_any_option option=vao::Absolute_heap_memory)
+    Operating_message add(entity e,T&& object,Void_any_option option=vao::Absolute_heap_memory)
     {   
         if(type_id_==-1)
         {
@@ -44,32 +44,32 @@ public:
             option_ = option;
             if(sparse_.empty()) 
             {
-                sparse_.resize(std::max(1, indexs+1), -1);
+                sparse_.resize(e.index_+1);
             }
         }
-        if(indexs==-1)
+        if(!e.is_valid())
         {
-            message.write_message(0,"error ","Single_class_set::add():ID is invalid "+std::to_string(indexs),";");
+            message.write_message(0,"error ","Single_class_set::add():ID is invalid "+std::to_string(e.index_),";");
             return message;
         }
-        if(sparse_.size()<=indexs)
+        if(sparse_.size()<=e.index_)
         {
-            sparse_.resize(indexs+1, -1);
+            sparse_.resize(e.index_+1, 0);
         }
-        int index=sparse_[indexs];
-        if(index!=-1)
+        auto index=sparse_[e.index_];
+        if(index!=0)
         {
 
             object_v_[index]=Void_any(std::forward<T>(object),option);
             return message;
         }
-        dense_.emplace_back(indexs);
-        sparse_[indexs]=dense_.size()-1;
+        dense_.emplace_back(e.index_);
+        sparse_[e.index_]=dense_.size()-1;
         object_v_.emplace_back(std::forward<T>(object),option); 
         return message;       
     }
     template <typename T>
-    T* get_ptr(int indexs)
+    T* get_ptr(entity e)
     {
         if(type_id_!=type_id::get_type_id<T>())
         {
@@ -77,24 +77,24 @@ public:
             return nullptr;
         }
 
-        if(indexs == -1 || indexs >= sparse_.size())
+        if(e.index_ >= sparse_.size())
         {
-            message.write_message (0,"error ","Single_class_set::get():Index out of range "+std::to_string(indexs),";");
+            message.write_message (0,"error ","Single_class_set::get():Index out of range "+std::to_string(e.index_),";");
             return nullptr;
         }
 
        
-        int index = sparse_[indexs];
+        auto index = sparse_[e.index_];
 
-        if(index == -1)
+        if(!e.is_valid())
         {
-            message.write_message(0,"error ","Single_class_set::get():Invalid index "+std::to_string(indexs),";");
+            message.write_message(0,"error ","Single_class_set::get():Invalid index "+std::to_string(e.index_),";");
             return nullptr;
         }
 
         if(index >= dense_.size())
         {
-            message.write_message(0,"error ","Single_class_set::get():Index out of range "+std::to_string(indexs),";");
+            message.write_message(0,"error ","Single_class_set::get():Index out of range "+std::to_string(e.index_),";");
             return nullptr;  
         }
 
@@ -102,7 +102,7 @@ public:
         return object_v_[index].get_ptr<T>();
     }
 
-    Operating_message remove(int indexs)
+    Operating_message remove(entity e)
     {
 
         if (dense_.empty() || object_v_.empty()) 
@@ -110,26 +110,26 @@ public:
             message.write_message(0, "error ", "Single_class_set::remove(): Container is empty", ";");
             return message;
         }
-        if(indexs == -1 || indexs >= sparse_.size())
+        if(e.index_ >= sparse_.size())
         {   
 
-            message.write_message(0,"error ","Single_class_set::remove():ID is invalid "+std::to_string(indexs),";");
+            message.write_message(0,"error ","Single_class_set::remove():ID is invalid "+std::to_string(e.index_),";");
             return message;
         }
         
-        int index = sparse_[indexs];
+        auto index = sparse_[e.index_];
 
-        if(index == -1)
+        if(!e.is_valid())
         {
 
-            message.write_message(0,"error ","Single_class_set::remove():ID is invalid "+std::to_string(indexs),";");
+            message.write_message(0,"error ","Single_class_set::remove():ID is invalid "+std::to_string(e.index_),";");
             return message;
         } 
 
 
-        int moved_entity_id = dense_.back();
+        auto moved_entity_id = dense_.back();
         dense_[index] = dense_.back();
-        if (moved_entity_id != indexs) 
+        if (moved_entity_id != e.index_) 
         {
             sparse_[moved_entity_id] = index;
         }
@@ -138,7 +138,7 @@ public:
         object_v_[index]=std::move(object_v_.back());
         object_v_.pop_back();
 
-        sparse_[indexs] = -1;
+        sparse_[e.index_] = 0;
         return message;
     }
 
@@ -200,13 +200,6 @@ public:
     {
         return dense_.size();
     }
-
-    template <typename T>
-    T* get_ptr(entity entitys)
-    {
-        return get_ptr<T>(entitys.id_);
-    }
-
     std::vector <Void_any>&get_component_vector()
     {
         return object_v_;

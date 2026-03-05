@@ -7,7 +7,7 @@
 #include "type_id.hpp"
 #include <optional>
 #include "void_any_config.hpp"
-
+#include <new>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -121,10 +121,12 @@ public:
         else
         {
             is_in_buff_ = false;
-            ptr_ = new DecayedT(std::forward<T>(object));        
+            ptr_ = ::operator new(sizeof(DecayedT));        
+            ptr_ = new (ptr_) DecayedT(std::forward<T>(object));
             deleter_ = [](void* p) 
             {
-                delete static_cast<DecayedT*>(p);
+                static_cast<DecayedT*>(p)->~DecayedT();
+                ::operator delete(p);
             };
         }
     }
@@ -143,67 +145,6 @@ public:
         }
 
     }
-
-    Void_any(Void_any&& other) noexcept
-    : 
-        ptr_(other.ptr_),  
-        deleter_(other.deleter_),
-        type_size_(other.type_size_),
-        is_in_buff_(other.is_in_buff_),
-        option_(other.option_),
-        any_type_id_(other.any_type_id_)
-    {
-        other.ptr_ = nullptr;
-        other.deleter_ = nullptr;
-        other.any_type_id_=-1;
-        if (is_in_buff_) 
-        {
-            memcpy(buff_, other.buff_, type_size_);
-            memset(other.buff_, 0, type_size_);
-        }
-    }
-
-
-
-    Void_any& operator=(Void_any&& other) noexcept
-    {
-        if (this != &other) 
-        {
-            if (!is_in_buff_ && deleter_ && ptr_) 
-            {
-                deleter_(ptr_);
-                ptr_ = nullptr;
-                deleter_ = nullptr;
-            } 
-            else if (is_in_buff_) 
-            {
-                memset(buff_, 0, type_size_);
-            }
-
-            ptr_ = other.ptr_;
-            deleter_ = other.deleter_;
-            type_size_ = other.type_size_;
-            is_in_buff_ = other.is_in_buff_;
-            option_=other.option_;
-            any_type_id_=other.any_type_id_;
-
-            other.ptr_ = nullptr;
-            other.deleter_ = nullptr;
-            other.is_in_buff_ = false;
-            other.option_=Void_any_option::Absolute_heap_memory;
-            other.any_type_id_=-1;
-
-            if (is_in_buff_) 
-            {
-                memcpy(buff_, other.buff_, type_size_);
-                memset(other.buff_, 0, type_size_);
-            }
-
-        }
-        return *this;
-    }
-
-
 
     template<typename T>
     void set(T&& object,Void_any_option options = vao::Absolute_heap_memory)
@@ -235,10 +176,12 @@ public:
         else
         {
             is_in_buff_ = false;
-            ptr_ = new DecayedT(std::forward<T>(object));        
+            ptr_ = ::operator new(sizeof(DecayedT));        
+            ptr_ = new (ptr_) DecayedT(std::forward<T>(object));
             deleter_ = [](void* p) 
             {
-                delete static_cast<DecayedT*>(p);
+                static_cast<DecayedT*>(p)->~DecayedT();
+                ::operator delete(p);
             };
         }
     }
@@ -268,7 +211,58 @@ public:
         return any_type_id_;
     }
     Void_any(const Void_any&) = delete;
-    Void_any& operator=(const Void_any&) = delete;    
+    Void_any& operator=(const Void_any&) = delete;
+    
+
+    Void_any(Void_any&& other) noexcept
+        : is_in_buff_(other.is_in_buff_)
+        , type_size_(other.type_size_)
+        , ptr_(other.ptr_)
+        , any_type_id_(other.any_type_id_)
+        , deleter_(other.deleter_)
+        , option_(other.option_)
+    {
+        if (other.is_in_buff_) 
+        {
+            memcpy(buff_, other.buff_, type_size_);
+        }
+
+        other.ptr_ = nullptr;
+        other.deleter_ = nullptr;
+        other.any_type_id_ = -1;
+    }
+    
+    Void_any& operator=(Void_any&& other) noexcept
+    {
+        if (this != &other) 
+        {
+            if (!is_in_buff_ && deleter_ && ptr_) 
+            {
+                deleter_(ptr_);
+            } 
+            else if (is_in_buff_) 
+            {
+                memset(buff_, 0, type_size_);
+            }
+            
+            is_in_buff_ = other.is_in_buff_;
+            type_size_ = other.type_size_;
+            ptr_ = other.ptr_;
+            any_type_id_ = other.any_type_id_;
+            deleter_ = other.deleter_;
+            option_ = other.option_;
+            
+            if (other.is_in_buff_) 
+            {
+                memcpy(buff_, other.buff_, type_size_);
+            }
+            
+            other.ptr_ = nullptr;
+            other.deleter_ = nullptr;
+            other.any_type_id_ = -1;
+        }
+        return *this;
+    }
 
     bool operator==(const Void_any& other) const
     {

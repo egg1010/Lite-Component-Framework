@@ -7,34 +7,30 @@
 class entity_manager
 {
 private:
-    inline static id_allocation<int> id_manager_;
-    std::vector<int> version_v_;
+    inline static id_allocation<uint32_t> id_manager_;
+    std::vector<uint32_t> version_v_;
     
 public:
     entity_manager(){}
     bool is_version_valid(entity entitys)
     {
-        return entitys.version_ == version_v_[entitys.id_];
+        if(entitys.index_ >= version_v_.size())return false;
+        return entitys.version_ == version_v_[entitys.index_];
     }
 
-    void destroy_entity(entity entitys)
+    void destroy_entity(entity &entitys)
     {
-        id_manager_.free_id(entitys.id_);
-        version_v_[entitys.id_]++;
+        if(!is_version_valid(entitys))
+        id_manager_.free_id(entitys.index_);
+        version_v_[entitys.index_]++;
     }
     entity get_entity()
     {
-        auto id = id_manager_.get_id();
-        if(id>=version_v_.size())
-        {
-            version_v_.resize(id+1,0);
-            version_v_[id]=0;
-            return entity{id,0};
-        } 
-        else
-        {
-            return entity{id,version_v_[id]};
+        uint32_t idx = id_manager_.get_id();
+        if (idx >= version_v_.size()) {
+            version_v_.resize(idx + 1, 0);
         }
+        return entity(idx, version_v_[idx]);
     }
 
 };

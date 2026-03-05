@@ -137,7 +137,7 @@ int main()
 
     std::cout<<"get_single_class_set"<<std::endl;
 
-    pos_s->add(entity3.id_,pos{15555,2222});
+    pos_s->add(entity3,pos{15555,2222});
 
     auto pos2=pos_s->get_ptr<pos>(entity1);
 

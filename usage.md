@@ -138,7 +138,7 @@ int main()
 
     std::cout<<"get_single_class_set"<<std::endl;
 
-    pos_s->add(entity3.id_,pos{15555,2222});
+    pos_s->add(entity3,pos{15555,2222});
 
     auto pos2=pos_s->get_ptr<pos>(entity1);
 
@@ -187,79 +187,6 @@ int main()
     std::cout<<"endl"<<std::endl;
     return 0;
 }
-
-```
-
-# 通用组件 
-# Universal Component
-``` c++
-
-//如果对象小于特定大小则在栈上分配，否则在堆上分配。
-//Allocate objects on the stack if they are below a certain size; otherwise, allocate them on the heap.
-//默认大小=32
-//Default size=32
-#define SINGLE_OBJECT_STACK_SIZE 64
-
-#include "include/component.hpp"
-#include <iostream>
-
-
-/*
-enum class Void_any_option
-{
-    //小对象被存储在栈上
-    //Small objects are stored on the stack.
-
-    Enable_stack_memory=1,
-
-    //所有对象都被分配在堆上 
-    //All objects are allocated on the heap.
-
-    Absolute_heap_memory=2
-};
-
-*/
-
-struct info
-{
-    std::string name;
-    int age;
-};
-
-
-
-struct pos
-{
-    int x,y;    
-};
-
-
-
-
-int main()
-{   
-    
-    type::Component component1{vao::Enable_stack_memory};
-
-    component1.add("info",info{"name",18},pos{1,2});
-
-    //重复添加将被直接覆盖
-    //Duplicate additions will be directly overwritten
-    component1.add("i3",info{"ne",14358},pos{51,322});
-
-    auto p=component1.get_ptr<info>();
-    p->age=19;
-
-
-
-    component1.remove<const char*,info,pos>();
-
-
-
-    return 0;
-}
-
-
 
 
 ```

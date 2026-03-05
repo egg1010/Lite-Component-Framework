@@ -101,7 +101,7 @@ public:
 
         for(auto &i:map_)
         {
-            i.second.remove(entitys.id_);
+            i.second.remove(entitys);
         }
     }
 
@@ -223,12 +223,12 @@ public:
         int type_id = type_id::get_type_id<DecayedT>();
         if(option_==oem::On_a_piece_of_memory)
         {
-            component_message=global_components_map_[type_id].add(entitys.id_,std::forward<T>(component),memory_option_);
+            component_message=global_components_map_[type_id].add(entitys,std::forward<T>(component),memory_option_);
             return component_message;
         }
         else
         {
-            component_message=components_map_[type_id].add(entitys.id_,std::forward<T>(component),memory_option_);
+            component_message=components_map_[type_id].add(entitys,std::forward<T>(component),memory_option_);
             return component_message;
         }
         
@@ -271,7 +271,7 @@ public:
                 component_message.write_message(0,"error:On_a_piece_of_memory ", "Object does not exist");
                 return nullptr;
             }
-            return global_components_map_[type_id].get_ptr<T>(entitys.id_);
+            return global_components_map_[type_id].get_ptr<T>(entitys);
         }
         else
         {
@@ -280,7 +280,7 @@ public:
                 component_message.write_message(0,"error:On_different_memory_blocks ", "Object does not exist");
                 return nullptr;
             }
-            return components_map_[type_id].get_ptr<T>(entitys.id_);
+            return components_map_[type_id].get_ptr<T>(entitys);
         }
 
     }
@@ -305,7 +305,7 @@ public:
                 component_message.write_message(0,"error:On_a_piece_of_memory ", "Object does not exist");
                 return component_message;
             }
-            component_message=global_components_map_[type_id].remove(entitys.id_);
+            component_message=global_components_map_[type_id].remove(entitys);
             return component_message;
         }
         else
@@ -315,7 +315,7 @@ public:
                 component_message.write_message(0,"error:On_different_memory_blocks ", "Object does not exist");
                 return component_message;
             }
-            component_message=components_map_[type_id].remove(entitys.id_);
+            component_message=components_map_[type_id].remove(entitys);
             return component_message;
         }
         return component_message;
@@ -406,7 +406,7 @@ public:
     // Only invalidate the entity.
     void soft_delete_entitys(entity &entitys)
     {
-        if(entitys.id_==-1)
+        if(!entitys.is_valid())
         {
             return;
         }
@@ -418,7 +418,7 @@ public:
     // Completely delete the entity and component.
     void hard_delete_entitys(entity &entitys)
     {
-        if(entitys.id_==-1)
+        if(!entitys.is_valid())
         {
             return;
         }
@@ -430,7 +430,7 @@ public:
         {
             for(auto &i:components_map_)
             {
-                i.second.remove(entitys.id_);
+                i.second.remove(entitys);
             }
         }
         entity_manager_.destroy_entity(entitys);
