@@ -401,8 +401,8 @@ public:
         }
     }
 
-    // 只让实体失效。
-    // Only invalidate the entity.
+    // 删除实体。
+    // Delete entity.
     void soft_delete_entitys(entity &entitys)
     {
         if(!entitys.is_valid())
