@@ -10,7 +10,6 @@
 
 
 
-
 class fun_return_value
 {
 public:

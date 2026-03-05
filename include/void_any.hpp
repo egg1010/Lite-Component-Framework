@@ -146,6 +146,7 @@ public:
 
     }
 
+    
     template<typename T>
     void set(T&& object,Void_any_option options = vao::Absolute_heap_memory)
     {

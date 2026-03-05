@@ -146,7 +146,6 @@ public:
     
 
 
-
     int &get_type_id()
     {
         return type_id_;

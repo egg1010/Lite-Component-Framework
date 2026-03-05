@@ -17,7 +17,6 @@ public:
         if(entitys.index_ >= version_v_.size())return false;
         return entitys.version_ == version_v_[entitys.index_];
     }
-
     void destroy_entity(entity &entitys)
     {
         if(!is_version_valid(entitys))

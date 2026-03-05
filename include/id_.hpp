@@ -5,7 +5,6 @@
 #include <stack>
 #include <mutex>
 
-
 template <typename T=size_t>
 class id_allocation
 {

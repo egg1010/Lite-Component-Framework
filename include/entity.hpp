@@ -3,7 +3,6 @@
 
 struct entity
 {
-
     entity() : handle_(0) {}
     entity(uint32_t idx, uint32_t v) : index_(idx), version_(v) {}
 
