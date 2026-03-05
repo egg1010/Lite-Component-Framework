@@ -10,7 +10,8 @@
 #include <concepts> 
 #include "single_class_set.hpp"
 #include "type_id.hpp"
-#include <shared_mutex> 
+#include <shared_mutex>
+#include "entity_manager.hpp" 
 
 template <typename T>
 concept entitysss = std::same_as<T, entity>;
@@ -21,22 +22,22 @@ namespace ecs
 
     
 
-class Global_components_map 
+class global_components_map 
 {
 private:
     mutable std::shared_mutex mutex_;
     std::unordered_map<size_t, Single_class_set> map_;
-    Global_components_map() = default;
-    inline static Global_components_map* instance_=nullptr;
+    global_components_map() = default;
+    inline static global_components_map* instance_=nullptr;
 public:
-    Global_components_map(const Global_components_map&) = delete;
-    Global_components_map& operator=(const Global_components_map&) = delete;
-    Global_components_map(Global_components_map&&) = delete;
-    Global_components_map& operator=(Global_components_map&&) = delete;
-    ~Global_components_map()=default;
-    static Global_components_map &create_g_m()
+    global_components_map(const global_components_map&) = delete;
+    global_components_map& operator=(const global_components_map&) = delete;
+    global_components_map(global_components_map&&) = delete;
+    global_components_map& operator=(global_components_map&&) = delete;
+    ~global_components_map()=default;
+    static global_components_map &create_g_m()
     {
-        static Global_components_map instance;
+        static global_components_map instance;
         return instance;
     }
 
@@ -165,31 +166,9 @@ public:
 
 //全局ecs
 //Global ECS
-inline static Global_components_map& global_components_map_ = Global_components_map::create_g_m();
+inline static global_components_map& global_components_map_ = global_components_map::create_g_m();
 
 
-
-
-
-
-
-class entity_manager
-{
-private:
-    inline static Id_allocation id_manager_;
-    entity_manager();
-public:
-    static entity create_entity()
-    {
-        return entity(id_manager_.get_id());
-    }
-
-    static void free_entity(entity &entitys)
-    {
-        id_manager_.free_id(entitys.id_);
-        entitys.id_=-1;
-    }
-};
 inline static Single_class_set null_single_class_set{};
 enum class ecs_option
 {
@@ -198,6 +177,8 @@ enum class ecs_option
 };
 using oem=ecs_option;
 
+
+
 class manager
 {
 private:
@@ -205,7 +186,7 @@ private:
     std::unordered_map<int, Single_class_set> components_map_;
     Operating_message component_message;
     Void_any_option memory_option_=vao::Absolute_heap_memory;
-    
+    entity_manager entity_manager_;
 
 
     manager()=delete;
@@ -215,7 +196,12 @@ private:
         memory_option_=memory_option;
     }   
     
-public:
+public:   
+         
+    entity create_entity()
+    {
+        return entity_manager_.get_entity();
+    }
     Operating_message &get_operating_message()
     {
         return component_message;
@@ -232,6 +218,7 @@ public:
     template <typename T>
     Operating_message add(entity entitys,T&& component)
     {
+        
         using DecayedT = std::decay_t<T>;
         int type_id = type_id::get_type_id<DecayedT>();
         if(option_==oem::On_a_piece_of_memory)
@@ -268,7 +255,13 @@ public:
     }
     template <typename T> 
     T *get_ptr(entity entitys)
-    {
+    {   
+        
+        if(!entity_manager_.is_version_valid(entitys))
+        {
+            component_message.write_message(0,"Invalid ID forbidden from accessing", "Invalid ID forbidden from accessing");
+            return component_message;
+        }
         using DecayedT = std::decay_t<T>;
         int type_id = type_id::get_type_id<DecayedT>();
         if(option_==oem::On_a_piece_of_memory)
@@ -297,6 +290,11 @@ public:
     template <typename T>
     Operating_message remove(entity entitys)
     {
+        if(!entity_manager_.is_version_valid(entitys))
+        {
+            component_message.write_message(0,"Invalid ID duplicate deletion","Invalid ID duplicate deletion");
+            return component_message;
+        }
         using DecayedT = std::decay_t<T>;
         int type_id = type_id::get_type_id<DecayedT>();
 
@@ -412,7 +410,7 @@ public:
         {
             return;
         }
-        entity_manager::free_entity(entitys);
+        entity_manager_.destroy_entity(entitys);
     }
 
 
@@ -435,7 +433,7 @@ public:
                 i.second.remove(entitys.id_);
             }
         }
-        entity_manager::free_entity(entitys);
+        entity_manager_.destroy_entity(entitys);
     }
     ~manager()=default;    
 

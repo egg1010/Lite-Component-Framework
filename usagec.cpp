@@ -62,10 +62,10 @@ int main()
 {   
     auto ecs = ecs::manager::create(vao::Enable_stack_memory,ecs::ecs_option::On_different_memory_blocks);
 
-    auto entity1=ecs::entity_manager::create_entity();
-    auto entity2=ecs::entity_manager::create_entity();   
-    auto entity3=ecs::entity_manager::create_entity(); 
-    auto entity4=ecs::entity_manager::create_entity(); 
+    auto entity1=ecs->create_entity();
+    auto entity2=ecs->create_entity();  
+    auto entity3=ecs->create_entity(); 
+    auto entity4=ecs->create_entity(); 
 
     //单函数运行信息
     //Single function run information

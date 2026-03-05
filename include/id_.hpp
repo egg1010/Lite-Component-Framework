@@ -5,20 +5,22 @@
 #include <stack>
 #include <mutex>
 
-class Id_allocation
+
+template <typename T=size_t>
+class id_allocation
 {
 private:
-    std::atomic<size_t> next_id_{1};
+    std::atomic<T> next_id_{1};
     mutable std::mutex recycled_mutex_;
-    std::stack<size_t, std::vector<size_t>> recycled_ids_;
+    std::stack<T, std::vector<T>> recycled_ids_;
 public:
-    size_t get_id()
+    T get_id()
     {
         {
             std::lock_guard<std::mutex> lock(recycled_mutex_);
             if (!recycled_ids_.empty()) 
             {
-                size_t id = recycled_ids_.top();
+                T id = recycled_ids_.top();
                 recycled_ids_.pop();
                 return id;
             }
@@ -27,7 +29,7 @@ public:
         return next_id_.fetch_add(1);
     }
     
-    void free_id(size_t id)
+    void free_id(T id)
     {
         if (id != 0) 
         {
@@ -36,13 +38,13 @@ public:
         }
     }
     
-    size_t total_number_of_ids() const 
+    T total_number_of_ids() const 
     { 
         std::lock_guard<std::mutex> lock(recycled_mutex_);
         return recycled_ids_.size(); 
     }
     
-    size_t maximum_id() const 
+    T maximum_id() const 
     { 
         return next_id_.load() - 1; 
     }
