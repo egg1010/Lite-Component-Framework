@@ -175,8 +175,8 @@ int main()
     //Remove the container instance of type [X].
     ecs->delete_type_container<pos>();
     
-    // 只让实体失效。
-    // Only invalidate the entity.
+    // 删除实体。
+    // Delete entity.
     ecs->soft_delete_entitys(entity4);
 
     // 完全删除实体和组件。
