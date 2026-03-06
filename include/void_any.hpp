@@ -17,7 +17,7 @@
 
 
 
-class Stack_monitor 
+class stack_monitor 
 {
 public:
     static bool is_stack_safe(size_t required_size) 
@@ -52,7 +52,7 @@ public:
 };
 
 
-enum class Void_any_option
+enum class void_any_option
 {
     Enable_stack_memory=1,
     Absolute_heap_memory=2
@@ -61,9 +61,9 @@ enum class Void_any_option
 
 
 
-using vao=Void_any_option;
+using vao=void_any_option;
 
-class Void_any
+class void_any
 {
 private:
 
@@ -75,16 +75,16 @@ private:
     void* ptr_={nullptr};
     int any_type_id_{-1};
     void (*deleter_)(void*){nullptr};
-    Void_any_option option_=Void_any_option::Absolute_heap_memory;
+    void_any_option option_=void_any_option::Absolute_heap_memory;
 public:
-    Void_any() 
+    void_any() 
     : 
         ptr_(nullptr), 
         deleter_(nullptr),
-        option_(Void_any_option::Absolute_heap_memory),
+        option_(void_any_option::Absolute_heap_memory),
         any_type_id_(-1)
     {}
-    Void_any(Void_any_option options) 
+    void_any(void_any_option options) 
     : 
         ptr_(nullptr), 
         deleter_(nullptr),
@@ -92,18 +92,18 @@ public:
     {   
         option_=options;
     }
-    void set_memory_mode(Void_any_option options)
+    void set_memory_mode(void_any_option options)
     {
         option_=options;
     }
-    Void_any_option get_memory_mode()
+    void_any_option get_memory_mode()
     {
         return option_;
     }
     
 
     template<typename T>
-    Void_any(T&& object,Void_any_option options=vao::Absolute_heap_memory)
+    void_any(T&& object,void_any_option options=vao::Absolute_heap_memory)
     {
         option_=options;
         using DecayedT = std::decay_t<T>;
@@ -112,7 +112,7 @@ public:
 
         if (
             type_size_ <= index_max&&
-            Stack_monitor::is_stack_safe(sizeof(Void_any))&&
+            stack_monitor::is_stack_safe(sizeof(void_any))&&
             option_==vao::Enable_stack_memory) 
         {
             memcpy(buff_, &object, type_size_);
@@ -131,7 +131,7 @@ public:
         }
     }
 
-    ~Void_any() 
+    ~void_any() 
     {
         if (!is_in_buff_ && deleter_ && ptr_) 
         {
@@ -148,7 +148,7 @@ public:
 
     
     template<typename T>
-    void set(T&& object,Void_any_option options = vao::Absolute_heap_memory)
+    void set(T&& object,void_any_option options = vao::Absolute_heap_memory)
     {
         option_=options;
         if (!is_in_buff_ && deleter_ && ptr_) 
@@ -168,7 +168,7 @@ public:
         any_type_id_=type_id::get_type_id<DecayedT>();
 
         if (type_size_ <= index_max&&
-            Stack_monitor::is_stack_safe(sizeof(Void_any))&&
+            stack_monitor::is_stack_safe(sizeof(void_any))&&
             option_==vao::Enable_stack_memory) 
         {
             memcpy(buff_, &object, type_size_);
@@ -211,11 +211,11 @@ public:
     {
         return any_type_id_;
     }
-    Void_any(const Void_any&) = delete;
-    Void_any& operator=(const Void_any&) = delete;
+    void_any(const void_any&) = delete;
+    void_any& operator=(const void_any&) = delete;
     
 
-    Void_any(Void_any&& other) noexcept
+    void_any(void_any&& other) noexcept
         : is_in_buff_(other.is_in_buff_)
         , type_size_(other.type_size_)
         , ptr_(other.ptr_)
@@ -233,7 +233,7 @@ public:
         other.any_type_id_ = -1;
     }
     
-    Void_any& operator=(Void_any&& other) noexcept
+    void_any& operator=(void_any&& other) noexcept
     {
         if (this != &other) 
         {
@@ -265,11 +265,11 @@ public:
         return *this;
     }
 
-    bool operator==(const Void_any& other) const
+    bool operator==(const void_any& other) const
     {
         return any_type_id_ == other.any_type_id_;
     }
 
 };
 
-inline static Void_any null_ {};
+inline static void_any null_ {};

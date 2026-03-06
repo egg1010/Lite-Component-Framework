@@ -184,13 +184,13 @@ class manager
 private:
     ecs_option option_=oem::On_a_piece_of_memory;
     std::unordered_map<int, Single_class_set> components_map_;
-    Operating_message component_message;
-    Void_any_option memory_option_=vao::Absolute_heap_memory;
+    operating_message component_message;
+    void_any_option memory_option_=vao::Absolute_heap_memory;
     entity_manager entity_manager_;
 
 
     manager()=delete;
-    manager(Void_any_option memory_option=vao::Absolute_heap_memory,ecs_option option=oem::On_a_piece_of_memory)
+    manager(void_any_option memory_option=vao::Absolute_heap_memory,ecs_option option=oem::On_a_piece_of_memory)
     {
         option_=option;
         memory_option_=memory_option;
@@ -202,11 +202,11 @@ public:
     {
         return entity_manager_.get_entity();
     }
-    Operating_message &get_operating_message()
+    operating_message &get_operating_message()
     {
         return component_message;
     }
-    static std::unique_ptr<manager> create(Void_any_option memory_option=vao::Absolute_heap_memory,ecs_option option = oem::On_a_piece_of_memory)
+    static std::unique_ptr<manager> create(void_any_option memory_option=vao::Absolute_heap_memory,ecs_option option = oem::On_a_piece_of_memory)
     {
         return std::unique_ptr<manager>(new manager(memory_option, option));
     }
@@ -216,7 +216,7 @@ public:
     manager& operator=(manager const&) = delete;
 
     template <typename T>
-    Operating_message add(entity entitys,T&& component)
+    operating_message add(entity entitys,T&& component)
     {
         
 
@@ -237,7 +237,7 @@ public:
     }
 
     template <entitysss ee,typename T>
-    Operating_message add(T&& component,ee entitys)
+    operating_message add(T&& component,ee entitys)
     {
         add(entitys, std::forward<T>(component));      
         return component_message;
@@ -285,7 +285,7 @@ public:
 
 
     template <typename T>
-    Operating_message remove(entity entitys)
+    operating_message remove(entity entitys)
     {
         using DecayedT = std::decay_t<T>;
         int type_id = type_id::get_type_id<DecayedT>();
@@ -354,7 +354,7 @@ public:
     }
 
     template <typename T>
-    std::vector <Void_any>*get_component_vector()
+    std::vector <void_any>*get_component_vector()
     {         
         using DecayedT = std::decay_t<T>;
         int type_id = type_id::get_type_id<DecayedT>();
@@ -443,24 +443,24 @@ namespace type
     class Component
     {
     private:
-        std::unordered_map<size_t,Void_any> components_map_;
+        std::unordered_map<size_t,void_any> components_map_;
         std::unordered_map<size_t,std::string>components_name_map_;
         
-        Void_any_option option_=vao::Absolute_heap_memory;
+        void_any_option option_=vao::Absolute_heap_memory;
 
         template <typename T>
         void add_components(T &&component)
         {
             using DecayedT = std::decay_t<T>;
             size_t type_hs = typeid(DecayedT).hash_code();
-            components_map_.insert_or_assign(type_hs, Void_any(std::forward<T>(component), option_));
+            components_map_.insert_or_assign(type_hs, void_any(std::forward<T>(component), option_));
             components_name_map_.insert_or_assign(type_hs, typeid(DecayedT).name());
         }
 
         Component()=delete;
         
     public: 
-        Component(Void_any_option options=vao::Absolute_heap_memory) : option_(options) {}
+        Component(void_any_option options=vao::Absolute_heap_memory) : option_(options) {}
         ~Component()=default;
         template <typename ...args>
         Component &add(args&&... argss) 

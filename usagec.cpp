@@ -27,7 +27,7 @@ namespace ecs
     };
 } 
 
-enum class Void_any_option
+enum class void_any_option
 {
     //小对象被存储在栈上
     //Small objects are stored on the stack.

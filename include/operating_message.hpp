@@ -2,16 +2,16 @@
 #include <string>   
 #include <sstream>
  
-class Operating_message
+class operating_message
 {
 private:
     bool line_break_{false};
     bool switch_{true};
     std::string message_;
 public:
-    ~Operating_message()=default;
+    ~operating_message()=default;
 
-    Operating_message(bool line_break=false)
+    operating_message(bool line_break=false)
     :
         line_break_(line_break)
     {}
@@ -37,7 +37,7 @@ public:
     {
         return switch_;
     }
-    Operating_message operator+=(Operating_message&& other)
+    operating_message operator+=(operating_message&& other)
     {
         message_ += other.message_;
         if(!switch_){switch_=false;}
@@ -45,14 +45,14 @@ public:
         return *this;
     }
 
-    Operating_message& operator+=(const Operating_message& other)
+    operating_message& operator+=(const operating_message& other)
     {
         message_ += other.message_;
         if(!switch_){switch_=false;}
         line_break_=other.line_break_;
         return *this;
     }
-    friend std::ostream& operator<<(std::ostream& os, const Operating_message& str)
+    friend std::ostream& operator<<(std::ostream& os, const operating_message& str)
     { 
         os << str.message_;
         return os;
@@ -77,8 +77,8 @@ public:
     }
 
 
-    Operating_message(Operating_message&& other) noexcept= default;
-    Operating_message& operator=(Operating_message&& other) noexcept= default;
-    Operating_message(const Operating_message& other)noexcept= default;
-    Operating_message& operator=(const Operating_message& other)noexcept= default;
+    operating_message(operating_message&& other) noexcept= default;
+    operating_message& operator=(operating_message&& other) noexcept= default;
+    operating_message(const operating_message& other)noexcept= default;
+    operating_message& operator=(const operating_message& other)noexcept= default;
 };

@@ -14,7 +14,7 @@ class manager;
 struct sparse_entry 
 {
     sparse_entry():dense_index_(0),version_(0) {}
-    sparse_entry(entity entitys):dense_index_(entitys.index_),version_(entitys.version_) {}
+
     uint32_t dense_index_{0};   
     uint32_t version_{0};      
     bool is_valid() const { return version_ != 0; }
@@ -25,10 +25,10 @@ class Single_class_set
 private:
     std::vector<sparse_entry> sparse_;
     std::vector<uint32_t> dense_;
-    std::vector<Void_any> object_v_;
+    std::vector<void_any> object_v_;
     int type_id_{-1};
-    Operating_message message;
-    Void_any_option option_{vao::Absolute_heap_memory};
+    operating_message message;
+    void_any_option option_{vao::Absolute_heap_memory};
 public:
     void clear()
     {
@@ -39,12 +39,12 @@ public:
     
     template <typename T>
 
-    Single_class_set(entity e,T&& object,Void_any_option option=vao::Absolute_heap_memory)
+    Single_class_set(entity e,T&& object,void_any_option option=vao::Absolute_heap_memory)
     {
         add(e,std::forward<T>(object),option);
     }
     template <typename T>
-    Operating_message add(entity e,T&& object,Void_any_option option=vao::Absolute_heap_memory)
+    operating_message add(entity e,T&& object,void_any_option option=vao::Absolute_heap_memory)
     {   
         
 
@@ -53,10 +53,6 @@ public:
             using DT= std::decay_t<T>;
             type_id_=type_id::get_type_id<DT>();
             option_ = option;
-            if(sparse_.empty()) 
-            {
-                sparse_.resize(e.index_+1);
-            }
         }
         if(!e.is_valid())
         {
@@ -69,14 +65,13 @@ public:
         }
         
         sparse_entry& entry = sparse_[e.index_];
-        bool exists = entry.is_valid() && (entry.version_ == e.version_);
 
-        if (exists) 
+        if (entry.is_valid() && (entry.version_ == e.version_)) 
         {
             uint32_t idx = entry.dense_index_;
             if (idx < object_v_.size()) 
             {
-                object_v_[idx] = Void_any(std::forward<T>(object), option);
+                object_v_[idx] = void_any(std::forward<T>(object), option);
             } 
             else 
             {
@@ -100,7 +95,14 @@ public:
     }
     template <typename T>
     T* get_ptr(entity e)
-    {
+    {        
+        
+        
+        if(!e.is_valid())
+        {
+            message.write_message(0,"error ","Single_class_set::get():Invalid index "+std::to_string(e.index_),";");
+            return nullptr;
+        }
         if(type_id_!=type_id::get_type_id<T>())
         {
             message.write_message(0,"error ","Single_class_set::get():Type mismatch", ";");
@@ -121,13 +123,9 @@ public:
 
         auto index = sparse_[e.index_].dense_index_;
 
-        if(!e.is_valid())
-        {
-            message.write_message(0,"error ","Single_class_set::get():Invalid index "+std::to_string(e.index_),";");
-            return nullptr;
-        }
 
-        if(index >= dense_.size())
+
+        if(index >= object_v_.size())
         {
             message.write_message(0,"error ","Single_class_set::get():Index out of range "+std::to_string(e.index_),";");
             return nullptr;  
@@ -137,8 +135,14 @@ public:
         return object_v_[index].get_ptr<T>();
     }
 
-    Operating_message remove(entity e)
+    operating_message remove(entity e)
     {
+
+        if (!e.is_valid()) 
+        {
+            message.write_message(0, "error ", "Single_class_set::remove(): Invalid entity", ";");
+            return message;
+        }
 
         if (dense_.empty() || object_v_.empty()) 
         {
@@ -159,6 +163,11 @@ public:
         }
 
         auto index = sparse_[e.index_].dense_index_;
+        if(index >= object_v_.size())
+        {
+            message.write_message(0,"error ","Single_class_set::remove():Index out of range "+std::to_string(e.index_),";");
+            return message;
+        }
 
         auto moved_entity_id = dense_.back();
         dense_[index] = dense_.back();
@@ -209,14 +218,14 @@ public:
         return *this;
     }
     
-    Operating_message &get_operating_message()
+    operating_message &get_operating_message()
     {
         return message;
     }
 
 
-    using iterator = typename std::vector<Void_any>::iterator;
-    using const_iterator = typename std::vector<Void_any>::const_iterator;
+    using iterator = typename std::vector<void_any>::iterator;
+    using const_iterator = typename std::vector<void_any>::const_iterator;
     
     iterator begin() {return object_v_.begin(); }
     iterator end() { return object_v_.end();}
@@ -232,7 +241,7 @@ public:
     {
         return dense_.size();
     }
-    std::vector <Void_any>&get_component_vector()
+    std::vector <void_any>&get_component_vector()
     {
         return object_v_;
     }
