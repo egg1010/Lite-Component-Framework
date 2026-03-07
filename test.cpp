@@ -89,7 +89,7 @@ void test_million_entities() {
     std::cout << "正在创建 " << entity_count << " 个实体..." << std::endl;
     timer.start();
     for (size_t i = 0; i < entity_count; ++i) {
-        entities.push_back(ecs->create_entity());
+        entities.emplace_back(ecs->create_entity());
     }
     double create_time = timer.elapsed_ms();
     print_performance_stats("创建实体", create_time, entity_count);
