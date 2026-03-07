@@ -76,7 +76,7 @@ void print_performance_stats(const std::string& operation,
 void test_million_entities() {
     print_separator("百万级实体性能测试");
     
-    // 创建ECS管理器（使用独立内存块模式，更适合大规模测试）
+
     auto ecs = ecs::manager::create(vao::Enable_stack_memory, ecs::ecs_option::On_different_memory_blocks);
     
     const size_t entity_count = 1000000; // 100万实体
@@ -221,8 +221,6 @@ int main()
     try {
         print_separator("ECS框架百万级性能测试");
         std::cout << "编译标准: C++20" << std::endl;
-        std::cout << "内存模式: Enable_stack_memory" << std::endl;
-        std::cout << "ECS模式: On_different_memory_blocks" << std::endl;
         std::cout << "测试时间: " << __DATE__ << " " << __TIME__ << std::endl;
         
         // 运行百万级实体测试

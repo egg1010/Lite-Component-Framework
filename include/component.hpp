@@ -193,7 +193,11 @@ private:
     }   
     
 public:   
-         
+    
+    void append_preallocated_entities(size_t count)
+    {
+        entity_manager_.append_preallocated_entities(count);
+    }
     entity create_entity()
     {
         return entity_manager_.get_entity();

@@ -1,5 +1,6 @@
 ```c++
 
+
 //如果对象小于特定大小则在栈上分配，否则在堆上分配。
 //Allocate objects on the stack if they are below a certain size; otherwise, allocate them on the heap.
 //默认大小=32
@@ -67,6 +68,10 @@ int main()
 
 
     auto ecs = ecs::manager::create(vao::Enable_stack_memory,ecs::ecs_option::On_different_memory_blocks);
+
+    //提前创建实体 默认创建500*1000
+    //Create entity in advance.The default number of entities created is 500*1000
+    ecs->append_preallocated_entities(1000*1000);
 
     auto entity1=ecs->create_entity();
     auto entity2=ecs->create_entity();  

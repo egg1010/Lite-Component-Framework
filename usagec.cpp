@@ -67,6 +67,10 @@ int main()
 
     auto ecs = ecs::manager::create(vao::Enable_stack_memory,ecs::ecs_option::On_different_memory_blocks);
 
+    //提前创建实体 默认创建500*1000
+    //Create entity in advance.The default number of entities created is 500*1000
+    ecs->append_preallocated_entities(1000*1000);
+
     auto entity1=ecs->create_entity();
     auto entity2=ecs->create_entity();  
     auto entity3=ecs->create_entity(); 
