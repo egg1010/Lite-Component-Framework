@@ -3,11 +3,14 @@
 #include "type_id.hpp"
 #include "void_any_config.hpp"
 #include <new>
+#include <type_traits>
+#include <cstddef>
 
 #ifdef _WIN32
-#include <windows.h>
+    #include <windows.h>
 #else
-#include <pthread.h>
+    #include <pthread.h>
+    #include <unistd.h>
 #endif
 
 
@@ -21,28 +24,25 @@ public:
         const char* stack_addr = reinterpret_cast<const char*>(&dummy);
         
 #ifdef _WIN32
-        // Windows 实现
+
         ULONG_PTR stack_low, stack_high;
         GetCurrentThreadStackLimits(&stack_low, &stack_high);
         size_t remaining = static_cast<size_t>(stack_high - reinterpret_cast<ULONG_PTR>(stack_addr));
-        return remaining > (required_size * 4);  
 #else
-        // POSIX 实现 
+
         pthread_attr_t attr;
         void* stack_base;
         size_t stack_size;
         
-        if (pthread_getattr_np(pthread_self(), &attr) == 0) {
-            if (pthread_attr_getstack(&attr, &stack_base, &stack_size) == 0) {
-                const char* stack_top = static_cast<const char*>(stack_base) + stack_size;
-                size_t remaining = static_cast<size_t>(stack_top - stack_addr);
-                pthread_attr_destroy(&attr);
-                return remaining > (required_size * 4);
-            }
-            pthread_attr_destroy(&attr);
-        }
-        return true; 
+        pthread_getattr_np(pthread_self(), &attr);
+        pthread_attr_getstack(&attr, &stack_base, &stack_size);
+        pthread_attr_destroy(&attr);
+        
+        const char* stack_top = static_cast<const char*>(stack_base) + stack_size;
+        size_t remaining = static_cast<size_t>(stack_top - stack_addr);
 #endif
+        
+        return remaining > (required_size + 1024);
     }
 };
 
@@ -52,7 +52,6 @@ enum class void_any_option
     Enable_stack_memory=1,
     Absolute_heap_memory=2
 };
-
 
 
 
@@ -70,12 +69,14 @@ private:
     void* ptr_={nullptr};
     int any_type_id_{-1};
     void (*deleter_)(void*){nullptr};
+    void (*inplace_destructor_)(std::byte*){nullptr};
     void_any_option option_=void_any_option::Absolute_heap_memory;
 public:
     void_any() 
     : 
         ptr_(nullptr), 
         deleter_(nullptr),
+        inplace_destructor_(nullptr),
         option_(void_any_option::Absolute_heap_memory),
         any_type_id_(-1)
     {}
@@ -83,6 +84,7 @@ public:
     : 
         ptr_(nullptr), 
         deleter_(nullptr),
+        inplace_destructor_(nullptr),
         any_type_id_(-1)
     {   
         option_=options;
@@ -106,12 +108,24 @@ public:
         any_type_id_=type_id::get_type_id<DecayedT>();
 
         if (
-            type_size_ <= index_max&&
-            stack_monitor::is_stack_safe(sizeof(void_any))&&
+            type_size_ <= index_max &&
+            std::is_trivially_copyable_v<DecayedT> &&
+            stack_monitor::is_stack_safe(type_size_) &&
             option_==vao::Enable_stack_memory) 
         {
-            memcpy(buff_, &object, type_size_);
+            new (buff_) DecayedT(std::forward<T>(object));
             is_in_buff_ = true;
+            if constexpr (!std::is_trivially_destructible_v<DecayedT>) 
+            {
+                inplace_destructor_ = [](std::byte* p)
+                {
+                    static_cast<DecayedT*>(static_cast<void*>(p))->~DecayedT();
+                };
+            } 
+            else 
+            {
+                inplace_destructor_ = nullptr;
+            }
         }
         else
         {
@@ -123,6 +137,7 @@ public:
                 static_cast<DecayedT*>(p)->~DecayedT();
                 ::operator delete(p);
             };
+            inplace_destructor_ = nullptr;
         }
     }
 
@@ -134,9 +149,10 @@ public:
             ptr_ = nullptr;
             deleter_ = nullptr;
         } 
-        else if (is_in_buff_) 
+        else if (is_in_buff_ && inplace_destructor_) 
         {
-            memset(buff_, 0, type_size_);
+            inplace_destructor_(buff_);
+            inplace_destructor_ = nullptr;
         }
 
     }
@@ -152,9 +168,10 @@ public:
             ptr_ = nullptr;
             deleter_ = nullptr;
         } 
-        else if (is_in_buff_) 
+        else if (is_in_buff_ && inplace_destructor_) 
         {
-            memset(buff_, 0, type_size_);
+            inplace_destructor_(buff_);
+            inplace_destructor_ = nullptr;
         }
 
         using DecayedT = std::decay_t<T>;
@@ -162,12 +179,24 @@ public:
         type_size_=sizeof(DecayedT);
         any_type_id_=type_id::get_type_id<DecayedT>();
 
-        if (type_size_ <= index_max&&
-            stack_monitor::is_stack_safe(sizeof(void_any))&&
+        if (type_size_ <= index_max &&
+            std::is_trivially_copyable_v<DecayedT> &&
+            stack_monitor::is_stack_safe(type_size_) &&
             option_==vao::Enable_stack_memory) 
         {
-            memcpy(buff_, &object, type_size_);
+            new (buff_) DecayedT(std::forward<T>(object));
             is_in_buff_ = true;
+            if constexpr (!std::is_trivially_destructible_v<DecayedT>) 
+            {
+                inplace_destructor_ = [](std::byte* p) 
+                {
+                    static_cast<DecayedT*>(static_cast<void*>(p))->~DecayedT();
+                };
+            } 
+            else 
+            {
+                inplace_destructor_ = nullptr;
+            }
         }
         else
         {
@@ -179,8 +208,24 @@ public:
                 static_cast<DecayedT*>(p)->~DecayedT();
                 ::operator delete(p);
             };
+            inplace_destructor_ = nullptr;
         }
     }
+
+    template<typename T>
+    T get() noexcept
+    { 
+        T* p = get_ptr<T>();
+        if (!p)
+        {
+            return T{};
+        }
+        else
+        {
+            return *p;
+        }
+    }
+
 
     template<typename T>
     T* get_ptr() noexcept
@@ -202,7 +247,7 @@ public:
         
     }
 
-    int get_type_id()
+    int get_type_id() const 
     {
         return any_type_id_;
     }
@@ -216,15 +261,20 @@ public:
         , ptr_(other.ptr_)
         , any_type_id_(other.any_type_id_)
         , deleter_(other.deleter_)
+        , inplace_destructor_(other.inplace_destructor_)
         , option_(other.option_)
     {
         if (other.is_in_buff_) 
         {
-            memcpy(buff_, other.buff_, type_size_);
+            for (size_t i = 0; i < type_size_; ++i) 
+            {
+                buff_[i] = other.buff_[i];
+            }
         }
 
         other.ptr_ = nullptr;
         other.deleter_ = nullptr;
+        other.inplace_destructor_ = nullptr;
         other.any_type_id_ = -1;
     }
     
@@ -236,9 +286,9 @@ public:
             {
                 deleter_(ptr_);
             } 
-            else if (is_in_buff_) 
+            else if (is_in_buff_ && inplace_destructor_) 
             {
-                memset(buff_, 0, type_size_);
+                inplace_destructor_(buff_);
             }
             
             is_in_buff_ = other.is_in_buff_;
@@ -246,15 +296,20 @@ public:
             ptr_ = other.ptr_;
             any_type_id_ = other.any_type_id_;
             deleter_ = other.deleter_;
+            inplace_destructor_ = other.inplace_destructor_;
             option_ = other.option_;
             
             if (other.is_in_buff_) 
             {
-                memcpy(buff_, other.buff_, type_size_);
+                for (size_t i = 0; i < type_size_; ++i) 
+                {
+                    buff_[i] = other.buff_[i];
+                }
             }
             
             other.ptr_ = nullptr;
             other.deleter_ = nullptr;
+            other.inplace_destructor_ = nullptr;
             other.any_type_id_ = -1;
         }
         return *this;
@@ -267,4 +322,8 @@ public:
 
 };
 
-inline static void_any null_ {};
+inline void_any& null_any() 
+{
+    static void_any instance;
+    return instance;
+}
