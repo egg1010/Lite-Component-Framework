@@ -6,7 +6,7 @@
 #include <mutex>
 
 template <typename T=size_t>
-class id_allocation_t
+class id_allocation
 {
 private:
     std::atomic<T> next_id_{1};

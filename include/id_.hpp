@@ -1,5 +1,4 @@
 #pragma once
-#include <cstdint>
 #include <vector>
 #include <stack>
 
@@ -12,7 +11,6 @@ private:
 public:
     T get_id()
     {
-
         if (!recycled_ids_.empty()) 
         {
             T id = recycled_ids_.top();
@@ -41,4 +39,3 @@ public:
         return next_id_; 
     }
 };
-

@@ -28,7 +28,6 @@ private:
     std::vector<void_any> object_v_;
     int type_id_{-1};
     operating_message message;
-    void_any_option option_{vao::Absolute_heap_memory};
     int type_size_{0};
     void predistribution(size_t r_size=500*1000)
     {
@@ -46,14 +45,14 @@ public:
     }
     
     template <typename T>
-    Single_class_set(entity e,T&& object,void_any_option option=vao::Absolute_heap_memory,size_t r_size=500*1000)
+    Single_class_set(entity e,T&& object,size_t r_size=500*1000)
     {
         type_size_=sizeof(T);
         predistribution(r_size);
-        add(e,std::forward<T>(object),option);
+        add(e,std::forward<T>(object));
     }
     template <typename T>
-    operating_message add(entity e,T&& object,void_any_option option=vao::Absolute_heap_memory)
+    operating_message add(entity e,T&& object)
     {   
         
 
@@ -62,7 +61,7 @@ public:
             type_size_=sizeof(T);
             using DT= std::decay_t<T>;
             type_id_=type_id::get_type_id<DT>();
-            option_ = option;
+
         }
         if(!e.is_valid())
         {
@@ -81,7 +80,7 @@ public:
             uint32_t idx = entry.dense_index_;
             if (idx < object_v_.size()) 
             {
-                object_v_[idx] = void_any(std::forward<T>(object), option);
+                object_v_[idx] = void_any(std::forward<T>(object));
             } 
             else 
             {
@@ -99,7 +98,7 @@ public:
             entry.dense_index_ = new_dense_index;
             entry.version_ = e.version_; 
 
-            object_v_.emplace_back(std::forward<T>(object), option);
+            object_v_.emplace_back(std::forward<T>(object));
         }
         return message;       
     }

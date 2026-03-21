@@ -1,45 +1,8 @@
 
-//如果对象小于特定大小则在栈上分配，否则在堆上分配。
-//Allocate objects on the stack if they are below a certain size; otherwise, allocate them on the heap.
-//默认大小=32
-//Default size=32
-#define SINGLE_OBJECT_STACK_SIZE 64
-
-
 #include "include/component.hpp"
 #include <iostream>
 
-/*
-namespace ecs
-{
-    enum class ecs_option
-    {
-        //无论创建多少管理对象始终存储在同一块内存上
-        //No matter how many management objects are created, they are always stored in the same block of memory.
 
-        On_a_piece_of_memory=1,
-
-        //每个管理器有独立的内存
-        //Each manager has its own independent memory
-
-        On_different_memory_blocks=2,
-    };
-} 
-
-enum class void_any_option
-{
-    //小对象被存储在栈上
-    //Small objects are stored on the stack.
-
-    Enable_stack_memory=1,
-
-    //所有对象都被分配在堆上 
-    //All objects are allocated on the heap.
-
-    Absolute_heap_memory=2
-};
-
-*/
 
 struct info
 {
@@ -64,26 +27,25 @@ int main()
 {   
 
 
-
-    auto ecs = ecs::manager::create(vao::Enable_stack_memory,ecs::ecs_option::On_different_memory_blocks);
+    ecs::manager ecss;
 
     //提前创建实体 默认创建500*1000
     //Create entity in advance.The default number of entities created is 500*1000
-    ecs->append_preallocated_entities(1000*1000);
+    ecss.append_preallocated_entities(1000*1000);
 
-    auto entity1=ecs->create_entity();
-    auto entity2=ecs->create_entity();  
-    auto entity3=ecs->create_entity(); 
-    auto entity4=ecs->create_entity(); 
+    auto entity1=ecss.create_entity();
+    auto entity2=ecss.create_entity();  
+    auto entity3=ecss.create_entity(); 
+    auto entity4=ecss.create_entity(); 
 
-    //单函数运行信息
-    //Single function run information
-    auto msg1=ecs->add(entity4,pos{15555,2222});
+    //获取运行信息
+    //Get running information
+    auto msg1=ecss.add(entity4,pos{15555,2222});
 
 
     //所有运行信息（只要有一次失败，就算作“false”。）
     //All running information (As long as there is one failure, it counts as 'false'.)
-    auto msg2=ecs->get_operating_message();
+    auto msg2=ecss.get_operating_message();
 
     if (msg1||msg2)
     {
@@ -95,30 +57,30 @@ int main()
         std::cout<<msg2.read_messge()<<std::endl;
     }
 
-    ecs->add(entity1,pos{15555,2222});
-    ecs->add(pos{133,123},entity2);
-    ecs->add(entity3,pos{18758,2678});
+    ecss.add(entity1,pos{15555,2222});
+    ecss.add(pos{133,123},entity2);
+    ecss.add(entity3,pos{18758,2678});
     
-    ecs->addc(entity1,info{"name",10})
+    ecss.addc(entity1,info{"name",10})
         .addc(info{"name",10},entity2)
         .addc(entity3,info{"name",10})
         .addc(entity4,info{"name",10});
 
     //重复添加将被直接覆盖
     //Duplicate additions will be directly overwritten
-    ecs->addc(entity1,pos{55,66})
+    ecss.addc(entity1,pos{55,66})
         .addc(pos{33,44},entity2)
         .addc(entity3,pos{11,12});
     
     //获得某类型容器
     //Obtain a certain type of container
-    auto pos_v = ecs->get_component_vector<pos>();
+    auto pos_v = ecss.get_component_vector<pos>();
 
     //获得某类型单一ecs
     //Obtain a single type of ECS
-    auto pos_s = ecs->get_single_class_set<pos>();
+    auto pos_s = ecss.get_single_class_set<pos>();
 
-    auto msg=ecs->get_operating_message();
+    auto msg=ecss.get_operating_message();
     if(msg)
     {
         std::cout<<"No error"<<std::endl;
@@ -173,19 +135,19 @@ int main()
         
     }
     
-    ecs->soft_remove<info>(entity1);
+    ecss.soft_remove<info>(entity1);
 
-    ecs->soft_removec<info>(entity2)
+    ecss.soft_removec<info>(entity2)
         .soft_removec<info>(entity3)
         .soft_removec<info>(entity4);
 
     //删除某类型容器
     //Remove the container instance of type [X].
-    ecs->delete_type_container<pos>();
+    ecss.delete_type_container<pos>();
     
     // 删除实体。
     // Delete entity.
-    ecs->delete_entitys(entity4);
+    ecss.delete_entity(entity4);
 
 
     std::cout<<"endl"<<std::endl;

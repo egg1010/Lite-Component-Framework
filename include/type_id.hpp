@@ -1,6 +1,5 @@
 #pragma once
 #include "id_.hpp"
-#include <unordered_map>
 
 class type_id
 {
@@ -17,4 +16,3 @@ public:
     }
 
 };
-
